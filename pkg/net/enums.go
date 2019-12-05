@@ -3,11 +3,14 @@ package net
 type HardwareType uint16
 
 const (
+	HardwareTypeLoopback = 0x0000
 	HardwareTypeEthernet = 0x0001
 )
 
 func (t HardwareType) String() string {
 	switch t {
+	case HardwareTypeLoopback:
+		return "Loopback"
 	case HardwareTypeEthernet:
 		return "Ethernet"
 	default:
