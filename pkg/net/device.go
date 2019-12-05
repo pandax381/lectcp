@@ -117,3 +117,7 @@ func (d *Device) Stop() {
 	d.running = false
 	d.mRunning.Unlock()
 }
+
+func (d *Device) RegisterInterface(iface ProtocolInterface) {
+	d.ifaces = append(d.ifaces, iface)
+}
