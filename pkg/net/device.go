@@ -14,6 +14,7 @@ type LinkDevice interface {
 	Address() HardwareAddress
 	BroadcastAddress() HardwareAddress
 	MTU() int
+	HeaderSize() int
 	NeedARP() bool
 	Close()
 	Read(data []byte) (int, error)
@@ -59,7 +60,7 @@ func (d *Device) Interfaces() []ProtocolInterface {
 
 func (d *Device) launchRxLoop() {
 	go func() {
-		var buf = make([]byte, 1514)
+		var buf = make([]byte, d.HeaderSize()+d.MTU())
 		for {
 			n, err := d.Read(buf)
 			if err != nil {

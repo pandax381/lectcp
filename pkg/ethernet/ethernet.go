@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"unsafe"
 
 	"github.com/pandax381/lectcp/pkg/net"
 	"github.com/pandax381/lectcp/pkg/raw"
@@ -62,6 +63,10 @@ func (d *Device) SetAddress(addr Address) {
 
 func (d *Device) MTU() int {
 	return d.mtu
+}
+
+func (d *Device) HeaderSize() int {
+	return int(unsafe.Sizeof(header{}))
 }
 
 func (d *Device) NeedARP() bool {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"log"
+	"unsafe"
 
 	"github.com/pandax381/lectcp/pkg/net"
 )
@@ -48,6 +49,10 @@ func (d *Device) BroadcastAddress() net.HardwareAddress {
 
 func (d *Device) MTU() int {
 	return d.mtu
+}
+
+func (d *Device) HeaderSize() int {
+	return int(unsafe.Sizeof(header{}))
 }
 
 func (d *Device) NeedARP() bool {
