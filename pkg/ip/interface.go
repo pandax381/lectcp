@@ -41,10 +41,25 @@ func CreateInterface(dev *net.Device, unicast, netmask, gateway string) (*Interf
 	if err != nil {
 		return nil, err
 	}
+	gw := EmptyAddress
+	if gateway != "" {
+		gw, err = ParseAddress(gateway)
+		if err != nil {
+			return nil, err
+		}
+	}
+	net := Address{ // network address
+		addr[0] & mask[0],
+		addr[1] & mask[1],
+		addr[2] & mask[2],
+		addr[3] & mask[3],
+	}
 	iface, err := newInterface(dev, addr, mask)
 	if err != nil {
 		return nil, err
 	}
+	repo.add(iface, net, mask, gw)
+	repo.dump()
 	return iface, nil
 }
 
@@ -86,17 +101,13 @@ func (iface *Interface) Tx(protocol net.ProtocolNumber, data []byte, dst net.Pro
 	var nexthop net.ProtocolAddress
 	src := iface.unicast
 	if dst.(Address) != BroadcastAddress {
-		network := Address{
-			iface.unicast[0] & iface.netmask[0],
-			iface.unicast[1] & iface.netmask[1],
-			iface.unicast[2] & iface.netmask[2],
-			iface.unicast[3] & iface.netmask[3],
+		routeEntry := repo.lookup(iface, dst.(Address))
+		if routeEntry == nil {
+			return fmt.Errorf("route not found")
 		}
-		if dst.(Address).Uint32()&iface.netmask.Uint32() != network.Uint32() {
-			if iface.gateway == EmptyAddress {
-				return fmt.Errorf("no route to host")
-			}
-			nexthop = iface.gateway
+		iface = routeEntry.iface
+		if nexthop = routeEntry.nexthop; nexthop == EmptyAddress {
+			nexthop = dst
 		}
 	}
 	assembler := newAssembler(protocol, data, src, dst, idm.next(), iface.Device().MTU())

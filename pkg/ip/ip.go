@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	//repo = newRouteTable()
+	repo = newRouteTable()
 	net.RegisterProtocol(net.EthernetTypeIP, rxHandler)
 }
 
