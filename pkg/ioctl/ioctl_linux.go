@@ -62,5 +62,5 @@ func SIOCGIFHWADDR(name string) ([]byte, error) {
 	if _, _, errno := syscall.Syscall6(syscall.SYS_IOCTL, uintptr(soc), syscall.SIOCGIFHWADDR, uintptr(unsafe.Pointer(&ifreq)), 0, 0, 0); errno != 0 {
 		return nil, errno
 	}
-	return ifreq.name[:], nil
+	return ifreq.addr.addr[:], nil
 }
