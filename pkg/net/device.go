@@ -27,6 +27,7 @@ type Device struct {
 	mRunning sync.Mutex
 	rxQueue  chan []byte
 	term     chan chan struct{}
+	ifaces   []ProtocolInterface
 }
 
 var devices = map[LinkDevice]*Device{}
@@ -43,7 +44,17 @@ func RegisterDevice(link LinkDevice) (*Device, error) {
 }
 
 func rxHandler(link LinkDevice, protocol EthernetType, payload []byte, src, dst HardwareAddress) {
-	log.Printf("rx: [%s] %s => %s (%s) %d bytes\n", link.Name(), src, dst, protocol, len(payload))
+	for k, entry := range protocols {
+		if k == EthernetType(protocol) {
+			log.Printf("rx: [%s] %s => %s (%s) %d bytes\n", link.Name(), src, dst, protocol, len(payload))
+			entry.rxQueue <- &packet{devices[link.(LinkDevice)], payload, src, dst}
+			return
+		}
+	}
+}
+
+func (d *Device) Interfaces() []ProtocolInterface {
+	return d.ifaces
 }
 
 func (d *Device) launchRxLoop() {

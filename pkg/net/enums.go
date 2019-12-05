@@ -35,3 +35,24 @@ func (t EthernetType) String() string {
 		return "Unknown"
 	}
 }
+
+type ProtocolNumber uint8
+
+const (
+	ProtocolNumberICMP ProtocolNumber = 0x01
+	ProtocolNumberTCP  ProtocolNumber = 0x06
+	ProtocolNumberUDP  ProtocolNumber = 0x11
+)
+
+func (t ProtocolNumber) String() string {
+	switch t {
+	case ProtocolNumberICMP:
+		return "ICMP"
+	case ProtocolNumberTCP:
+		return "TCP"
+	case ProtocolNumberUDP:
+		return "UDP"
+	default:
+		return "Unknown"
+	}
+}
