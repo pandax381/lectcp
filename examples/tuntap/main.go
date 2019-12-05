@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/pandax381/lectcp/pkg/tuntap"
+	"github.com/pandax381/lectcp/pkg/raw/tuntap"
 )
 
 func main() {
