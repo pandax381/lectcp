@@ -91,7 +91,6 @@ func (d *Device) RxHandler(data []byte, callback net.LinkDeviceCallbackHandler) 
 	if frame.Src == d.addr {
 		// loopback frame
 	}
-	log.Printf("rx: [%s] %s => %s (%s) %d bytes\n", d.Name(), frame.Src, frame.Dst, frame.Type, len(frame.payload))
 	callback(d, frame.Type, frame.payload, frame.Src, frame.Dst)
 }
 
