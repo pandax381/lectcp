@@ -24,7 +24,7 @@ var protocols = map[EthernetType]*entry{}
 
 func RegisterProtocol(Type EthernetType, rxHandler ProtocolRxHandler) error {
 	if protocols[Type] != nil {
-		return fmt.Errorf("protocol `%s` is registerd", Type)
+		return fmt.Errorf("protocol `%s` is already registered", Type)
 	}
 	entry := &entry{
 		Type:      Type,
@@ -40,6 +40,6 @@ func RegisterProtocol(Type EthernetType, rxHandler ProtocolRxHandler) error {
 			}
 		}
 	}()
-	log.Printf("protocol registerd: %s\n", entry.Type)
+	log.Printf("protocol registered: %s\n", entry.Type)
 	return nil
 }

@@ -34,7 +34,7 @@ var devices = map[LinkDevice]*Device{}
 
 func RegisterDevice(link LinkDevice) (*Device, error) {
 	if _, exists := devices[link]; exists {
-		return nil, fmt.Errorf("link device '%s' is already registerd", link.Name())
+		return nil, fmt.Errorf("link device '%s' is already registered", link.Name())
 	}
 	dev := &Device{
 		LinkDevice: link,
