@@ -80,7 +80,7 @@ func (iface *Interface) xmit(datagram *datagram, nexthop net.ProtocolAddress) er
 	binary.Write(buf, binary.BigEndian, &datagram.header)
 	binary.Write(buf, binary.BigEndian, datagram.payload)
 	b := buf.Bytes()
-	binary.BigEndian.PutUint16(b[10:12], net.Cksum16(b, len(b), 0))
+	binary.BigEndian.PutUint16(b[10:12], net.Cksum16(b, int((datagram.VHL&0x0f)<<2), 0))
 	var hardwareAddress []byte
 	if iface.Device().NeedARP() {
 		if nexthop != nil {
