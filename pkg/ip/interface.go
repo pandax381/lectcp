@@ -63,6 +63,25 @@ func CreateInterface(dev *net.Device, unicast, netmask, gateway string) (*Interf
 	return iface, nil
 }
 
+func GetInterface(addr net.ProtocolAddress) net.ProtocolInterface {
+	for _, dev := range net.Devices() {
+		for _, iface := range dev.Interfaces() {
+			if iface.Type() == net.EthernetTypeIP && iface.Address() == addr {
+				return iface
+			}
+		}
+	}
+	return nil
+}
+
+func GetInterfaceByRemoteAddress(remote net.ProtocolAddress) net.ProtocolInterface {
+	route := repo.lookup(nil, remote.(Address))
+	if route == nil {
+		return nil
+	}
+	return route.iface
+}
+
 func (iface *Interface) Type() net.EthernetType {
 	return net.EthernetTypeIP
 }

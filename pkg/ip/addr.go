@@ -48,3 +48,7 @@ func (a Address) String() string {
 func (a Address) Uint32() uint32 {
 	return *(*uint32)(unsafe.Pointer(&a[0]))
 }
+
+func (a Address) IsEmpty() bool {
+	return a == EmptyAddress
+}

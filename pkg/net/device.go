@@ -54,6 +54,14 @@ func rxHandler(link LinkDevice, protocol EthernetType, payload []byte, src, dst 
 	}
 }
 
+func Devices() []*Device {
+	ret := []*Device{}
+	for _, v := range devices {
+		ret = append(ret, v)
+	}
+	return ret
+}
+
 func (d *Device) Interfaces() []ProtocolInterface {
 	return d.ifaces
 }
