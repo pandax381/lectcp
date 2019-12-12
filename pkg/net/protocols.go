@@ -36,7 +36,9 @@ func RegisterProtocol(Type EthernetType, rxHandler ProtocolRxHandler) error {
 		for {
 			select {
 			case packet, _ := <-entry.rxQueue:
-				entry.rxHandler(packet.dev, packet.data, packet.src, packet.dst)
+				if err := entry.rxHandler(packet.dev, packet.data, packet.src, packet.dst); err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}()
