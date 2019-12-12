@@ -65,13 +65,35 @@ func reply(iface net.ProtocolInterface, targetProtocolAddress []byte, targetHard
 	return dev.Tx(net.EthernetTypeARP, buf.Bytes(), targetHardwareAddress)
 }
 
+func request(iface net.ProtocolInterface, targetProtocolAddress []byte) error {
+	dev := iface.Device()
+	hdr := header{
+		HardwareType:          dev.Type(),
+		ProtocolType:          iface.Type(),
+		HardwareAddressLength: dev.Address().Len(),
+		ProtocolAddressLength: iface.Address().Len(),
+		OperationCode:         operationRequest,
+	}
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.BigEndian, &hdr)
+	binary.Write(buf, binary.BigEndian, dev.Address().Bytes())
+	binary.Write(buf, binary.BigEndian, iface.Address().Bytes())
+	binary.Write(buf, binary.BigEndian, bytes.Repeat([]byte{byte(0)}, int(hdr.HardwareAddressLength)))
+	binary.Write(buf, binary.BigEndian, targetProtocolAddress)
+
+	return dev.Tx(net.EthernetTypeARP, buf.Bytes(), dev.BroadcastAddress().Bytes())
+}
+
 func Resolve(iface net.ProtocolInterface, target []byte, data []byte) ([]byte, error) {
 	repo.mutex.RLock()
-	repo.mutex.RUnlock()
 	entry := repo.lookupUnlocked(target)
 	if entry == nil {
-		// TODO: send arp request
-		return nil, fmt.Errorf("arp entry not found")
+		repo.mutex.RUnlock()
+		if err := request(iface, target); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("address resolution in progress")
 	}
+	repo.mutex.RUnlock()
 	return entry.hardwareAddress, nil
 }
