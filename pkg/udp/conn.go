@@ -3,6 +3,7 @@ package udp
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"unsafe"
 
@@ -19,6 +20,14 @@ func (conn *Conn) Close() {
 	// TODO
 }
 
+func (conn *Conn) Read(buf []byte) (int, error) {
+	if conn.peer == nil {
+		return -1, fmt.Errorf("this Conn is not dialed")
+	}
+	n, _, err := conn.ReadFrom(buf)
+	return n, err
+}
+
 func (conn *Conn) ReadFrom(buf []byte) (int, *Address, error) {
 	select {
 	case q := <-conn.cb.rxQueue:
@@ -32,6 +41,13 @@ func getAppropriateInterface(local, remote net.ProtocolAddress) net.ProtocolInte
 		return ip.GetInterfaceByRemoteAddress(remote)
 	}
 	return ip.GetInterface(local)
+}
+
+func (conn *Conn) Write(data []byte) error {
+	if conn.peer == nil {
+		return fmt.Errorf("this Conn is not dialed")
+	}
+	return conn.WriteTo(data, conn.peer)
 }
 
 func (conn *Conn) WriteTo(data []byte, peer *Address) error {

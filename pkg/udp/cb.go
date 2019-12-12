@@ -48,15 +48,38 @@ func (repo *cbRepository) lookup(addr *Address) *cbEntry {
 	return repo.lookupUnlocked(addr)
 }
 
+func (repo *cbRepository) getAvailablePort(addr net.ProtocolAddress) uint16 {
+	var port uint16
+	for port = 40000; port <= 65535; port++ {
+		var elem *list.Element
+		for elem = repo.list.Front(); elem != nil; elem = elem.Next() {
+			entry := elem.Value.(*cbEntry)
+			if entry.Port == port && (entry.Addr.IsEmpty() || entry.Addr == addr) {
+				break
+			}
+		}
+		if elem == nil {
+			return port
+		}
+	}
+	return 0
+}
+
 func (repo *cbRepository) add(addr *Address) *cbEntry {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
-	entry := repo.lookupUnlocked(addr)
-	if entry != nil {
-		fmt.Println("entry exists")
-		return nil
+	if addr.Port == 0 {
+		addr.Port = repo.getAvailablePort(addr.Addr)
+		if addr.Port == 0 {
+			return nil
+		}
+	} else {
+		if repo.lookupUnlocked(addr) != nil {
+			fmt.Println("entry exists")
+			return nil
+		}
 	}
-	entry = &cbEntry{
+	entry := &cbEntry{
 		Address: addr,
 		rxQueue: make(chan *queueEntry),
 	}
