@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
-	"unsafe"
 
 	"github.com/pandax381/lectcp/pkg/net"
 	"github.com/pandax381/lectcp/pkg/raw"
@@ -66,7 +65,7 @@ func (d *Device) MTU() int {
 }
 
 func (d *Device) HeaderSize() int {
-	return int(unsafe.Sizeof(header{}))
+	return headerSize
 }
 
 func (d *Device) NeedARP() bool {
@@ -100,10 +99,11 @@ func (d *Device) RxHandler(data []byte, callback net.LinkDeviceCallbackHandler) 
 }
 
 func (d *Device) Tx(Type net.EthernetType, data []byte, dst []byte) error {
-	hdr := header{}
-	copy(hdr.Dst[:], dst)
-	copy(hdr.Src[:], d.addr[:])
-	hdr.Type = Type
+	hdr := header{
+		Dst:  NewAddress(dst),
+		Src:  d.addr,
+		Type: Type,
+	}
 	frame := bytes.NewBuffer(make([]byte, 0))
 	binary.Write(frame, binary.BigEndian, hdr)
 	binary.Write(frame, binary.BigEndian, data)

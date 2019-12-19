@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-type Address [6]byte
+const AddressLength = 6
+
+type Address [AddressLength]byte
 
 var (
 	EmptyAddress     = Address{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
@@ -14,12 +16,18 @@ var (
 	BroadcastAddress = Address{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 )
 
+func NewAddress(b []byte) Address {
+	var ret Address
+	copy(ret[:], b)
+	return ret
+}
+
 func ParseAddress(s string) (Address, error) {
 	parts := strings.FieldsFunc(s, func(c rune) bool {
 		return c == ':' || c == '-'
 	})
 	ret := Address{}
-	if len(parts) != 6 {
+	if len(parts) != AddressLength {
 		return ret, fmt.Errorf("inconsistent parts: %s", s)
 	}
 	for i, part := range parts {
@@ -30,6 +38,10 @@ func ParseAddress(s string) (Address, error) {
 		ret[i] = byte(u)
 	}
 	return ret, nil
+}
+
+func (a Address) isGroupAddress() bool {
+	return (a[0] & 0x01) != 0
 }
 
 func (a Address) Bytes() []byte {
