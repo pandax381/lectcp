@@ -1,11 +1,9 @@
 package tuntap
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"syscall"
-	"unsafe"
 
 	"github.com/pandax381/lectcp/pkg/ioctl"
 )
@@ -20,18 +18,10 @@ func openTap(name string) (string, *os.File, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	ifreq := struct {
-		name  [syscall.IFNAMSIZ]byte
-		flags uint16
-		_pad  [22]byte
-	}{}
-	copy(ifreq.name[:syscall.IFNAMSIZ-1], []byte(name))
-	ifreq.flags = syscall.IFF_TAP | syscall.IFF_NO_PI
-	if _, _, errno := syscall.Syscall6(syscall.SYS_IOCTL, uintptr(file.Fd()), syscall.TUNSETIFF, uintptr(unsafe.Pointer(&ifreq)), 0, 0, 0); errno != 0 {
-		file.Close()
-		return "", nil, errno
+	name, err = ioctl.TUNSETIFF(file.Fd(), name, syscall.IFF_TAP|syscall.IFF_NO_PI)
+	if err != nil {
+		return "", nil, err
 	}
-	name = string(ifreq.name[:bytes.IndexByte(ifreq.name[:], 0)])
 	flags, err := ioctl.SIOCGIFFLAGS(name)
 	if err != nil {
 		file.Close()
