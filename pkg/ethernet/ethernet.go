@@ -87,8 +87,12 @@ func (d *Device) RxHandler(data []byte, callback net.LinkDeviceCallbackHandler) 
 		return
 	}
 	if frame.Dst != d.addr {
+		if !frame.Dst.isGroupAddress() {
+			// other host frame
+			return
+		}
 		if frame.Dst != BroadcastAddress {
-			// unsupported multicast frame
+			// multicast frame: unsupported
 			return
 		}
 	}
