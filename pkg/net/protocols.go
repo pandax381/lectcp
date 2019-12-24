@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	"log"
+	"sync"
 )
 
 type ProtocolRxHandler func(dev *Device, data []byte, src, dst HardwareAddress) error
@@ -20,10 +21,10 @@ type entry struct {
 	rxQueue   chan *packet
 }
 
-var protocols = map[EthernetType]*entry{}
+var protocols = sync.Map{}
 
 func RegisterProtocol(Type EthernetType, rxHandler ProtocolRxHandler) error {
-	if protocols[Type] != nil {
+	if _, exists := protocols.Load(Type); exists {
 		return fmt.Errorf("protocol `%s` is already registered", Type)
 	}
 	entry := &entry{
@@ -31,17 +32,15 @@ func RegisterProtocol(Type EthernetType, rxHandler ProtocolRxHandler) error {
 		rxHandler: rxHandler,
 		rxQueue:   make(chan *packet),
 	}
-	protocols[Type] = entry
+	// launch rx loop
 	go func() {
-		for {
-			select {
-			case packet, _ := <-entry.rxQueue:
-				if err := entry.rxHandler(packet.dev, packet.data, packet.src, packet.dst); err != nil {
-					log.Println(err)
-				}
+		for packet := range entry.rxQueue {
+			if err := entry.rxHandler(packet.dev, packet.data, packet.src, packet.dst); err != nil {
+				log.Println(err)
 			}
 		}
 	}()
+	protocols.Store(Type, entry)
 	log.Printf("protocol registered: %s\n", entry.Type)
 	return nil
 }
