@@ -19,6 +19,20 @@ type Device struct {
 	queue chan []byte
 }
 
+type Address struct{}
+
+func (Address) Bytes() []byte {
+	return []byte{}
+}
+
+func (Address) Len() uint8 {
+	return 0
+}
+
+func (Address) String() string {
+	return "(no address)"
+}
+
 var _ net.LinkDevice = &Device{} // interface check
 
 var dev = Device{
@@ -40,7 +54,7 @@ func (d *Device) Name() string {
 }
 
 func (d *Device) Address() net.HardwareAddress {
-	return nil
+	return Address{}
 }
 
 func (d *Device) BroadcastAddress() net.HardwareAddress {
