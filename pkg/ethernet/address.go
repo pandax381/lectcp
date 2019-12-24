@@ -22,22 +22,22 @@ func NewAddress(b []byte) Address {
 	return ret
 }
 
-func ParseAddress(s string) (Address, error) {
+func ParseAddress(s string) Address {
 	parts := strings.FieldsFunc(s, func(c rune) bool {
 		return c == ':' || c == '-'
 	})
 	ret := Address{}
 	if len(parts) != AddressLength {
-		return ret, fmt.Errorf("inconsistent parts: %s", s)
+		return InvalidAddress
 	}
 	for i, part := range parts {
 		u, err := strconv.ParseUint(part, 16, 8)
 		if err != nil {
-			return ret, fmt.Errorf("invalid hex digits: %s", s)
+			return InvalidAddress
 		}
 		ret[i] = byte(u)
 	}
-	return ret, nil
+	return ret
 }
 
 func (a Address) isGroupAddress() bool {
