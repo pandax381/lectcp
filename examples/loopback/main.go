@@ -10,40 +10,39 @@ import (
 	"github.com/pandax381/lectcp/pkg/net"
 )
 
-func setupLoopback() (*net.Device, error) {
-	link, err := loopback.NewDevice()
-	if err != nil {
-		return nil, err
-	}
-	dev, err := net.RegisterDevice(link)
-	if err != nil {
-		return nil, err
-	}
-	return dev, nil
-}
-
 func init() {
 	icmp.Init()
 }
 
-func main() {
-	dev, err := setupLoopback()
+func setup() error {
+	link, err := loopback.NewDevice()
 	if err != nil {
-		panic(err)
+		return err
+	}
+	dev, err := net.RegisterDevice(link)
+	if err != nil {
+		return err
 	}
 	log.Printf("[%s] %s\n", dev.Name(), dev.Address())
 	iface, err := ip.CreateInterface(dev, "127.0.0.1", "255.0.0.0", "")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	dev.RegisterInterface(iface)
-	dev.Run()
-	addr, err := ip.ParseAddress("127.0.0.1")
-	if err != nil {
+	return nil
+}
+
+func main() {
+	if err := setup(); err != nil {
 		panic(err)
 	}
+	go func() {
+		peer := ip.ParseAddress("127.0.0.1")
+		for range time.Tick(3 * time.Second) {
+			icmp.EchoRequest([]byte("1234567890"), peer)
+		}
+	}()
 	for {
-		icmp.EchoRequest(iface, []byte("1234567890"), addr)
 		time.Sleep(1 * time.Second)
 	}
 }

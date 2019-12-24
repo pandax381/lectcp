@@ -4,18 +4,19 @@ import (
 	"flag"
 	"time"
 
-	"github.com/pandax381/lectcp/pkg/arp"
 	"github.com/pandax381/lectcp/pkg/ethernet"
+	"github.com/pandax381/lectcp/pkg/icmp"
 	"github.com/pandax381/lectcp/pkg/ip"
 	"github.com/pandax381/lectcp/pkg/net"
 	"github.com/pandax381/lectcp/pkg/raw/tuntap"
+	"github.com/pandax381/lectcp/pkg/udp"
 )
 
 func init() {
-	arp.Init()
+	icmp.Init()
 }
 
-func setup() error {
+func setupTap() error {
 	name := flag.String("name", "", "device name")
 	addr := flag.String("addr", "", "hardware address")
 	flag.Parse()
@@ -36,17 +37,28 @@ func setup() error {
 	}
 	iface, err := ip.CreateInterface(dev, "172.16.0.100", "255.255.255.0", "")
 	if err != nil {
-		return err
+		panic(err)
 	}
 	dev.RegisterInterface(iface)
 	return nil
 }
 
 func main() {
-	if err := setup(); err != nil {
+	if err := setupTap(); err != nil {
+		panic(err)
+	}
+	conn, err := udp.Dial(
+		nil,
+		&udp.Address{
+			Addr: ip.ParseAddress("172.16.0.1"),
+			Port: 10381,
+		},
+	)
+	if err != nil {
 		panic(err)
 	}
 	for {
-		time.Sleep(1 * time.Second)
+		conn.Write([]byte("hoge\n"))
+		time.Sleep(3 * time.Second)
 	}
 }
