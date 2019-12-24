@@ -15,22 +15,22 @@ var (
 	BroadcastAddress = Address{0xff, 0xff, 0xff, 0xff}
 )
 
-func ParseAddress(s string) (Address, error) {
+func ParseAddress(s string) Address {
 	parts := strings.FieldsFunc(s, func(c rune) bool {
 		return c == '.'
 	})
 	if len(parts) != 4 {
-		return InvalidAddress, fmt.Errorf("inconsistent parts: %s", s)
+		return InvalidAddress
 	}
 	ret := Address{}
 	for i, part := range parts {
 		u, err := strconv.ParseUint(part, 10, 8)
 		if err != nil {
-			return InvalidAddress, fmt.Errorf("invalid digits: %s", part)
+			return InvalidAddress
 		}
 		ret[i] = uint8(u & 0xff)
 	}
-	return ret, nil
+	return ret
 }
 
 func (a Address) Bytes() []byte {

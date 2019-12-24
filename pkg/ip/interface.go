@@ -33,19 +33,19 @@ func newInterface(dev *net.Device, unicast, netmask Address) (*Interface, error)
 }
 
 func CreateInterface(dev *net.Device, unicast, netmask, gateway string) (*Interface, error) {
-	addr, err := ParseAddress(unicast)
-	if err != nil {
-		return nil, err
+	addr := ParseAddress(unicast)
+	if addr == InvalidAddress {
+		return nil, fmt.Errorf("invalid address: %s", unicast)
 	}
-	mask, err := ParseAddress(netmask)
-	if err != nil {
-		return nil, err
+	mask := ParseAddress(netmask)
+	if mask == InvalidAddress {
+		return nil, fmt.Errorf("invalid address: %s", netmask)
 	}
 	gw := EmptyAddress
 	if gateway != "" {
-		gw, err = ParseAddress(gateway)
-		if err != nil {
-			return nil, err
+		gw = ParseAddress(gateway)
+		if gw == InvalidAddress {
+			return nil, fmt.Errorf("invalid address: %s", gateway)
 		}
 	}
 	net := Address{ // network address
