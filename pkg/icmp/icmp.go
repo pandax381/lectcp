@@ -48,12 +48,12 @@ func tx(iface net.ProtocolInterface, msg message, dst net.ProtocolAddress) error
 	return iface.Tx(net.ProtocolNumberICMP, buf, dst)
 }
 
-func EchoRequest(iface net.ProtocolInterface, data []byte, dst net.ProtocolAddress) error {
+func EchoRequest(data []byte, dst net.ProtocolAddress) error {
 	request := &messageEcho{
 		header: header{messageTypeEcho, 0, 0},
 		id:     0,
 		seq:    0,
 		data:   data,
 	}
-	return tx(iface, request, dst)
+	return tx(ip.GetInterfaceByRemoteAddress(dst), request, dst)
 }
