@@ -1,48 +1,58 @@
 package main
 
 import (
-	"log"
-	"time"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/pandax381/lectcp/pkg/arp"
 	"github.com/pandax381/lectcp/pkg/icmp"
 	"github.com/pandax381/lectcp/pkg/ip"
 	"github.com/pandax381/lectcp/pkg/loopback"
 	"github.com/pandax381/lectcp/pkg/net"
 )
 
+var sig chan os.Signal
+
 func init() {
+	arp.Init()
 	icmp.Init()
 }
 
-func setup() error {
+func setup() (*net.Device, error) {
+	// signal handling
+	sig = make(chan os.Signal)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	link, err := loopback.NewDevice()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	dev, err := net.RegisterDevice(link)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	log.Printf("[%s] %s\n", dev.Name(), dev.Address())
 	iface, err := ip.CreateInterface(dev, "127.0.0.1", "255.0.0.0", "")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	dev.RegisterInterface(iface)
-	return nil
+	return dev, nil
 }
 
 func main() {
-	if err := setup(); err != nil {
+	dev, err := setup()
+	if err != nil {
 		panic(err)
 	}
-	go func() {
-		peer := ip.ParseAddress("127.0.0.1")
-		for range time.Tick(3 * time.Second) {
-			icmp.EchoRequest([]byte("1234567890"), peer)
-		}
-	}()
-	for {
-		time.Sleep(1 * time.Second)
+	fmt.Printf("[%s] %s\n", dev.Name(), dev.Address())
+	for _, iface := range dev.Interfaces() {
+		fmt.Printf("  - %s\n", iface.Address())
 	}
+	select {
+	case s := <-sig:
+		fmt.Printf("sig: %s\n", s)
+		dev.Shutdown()
+	}
+	fmt.Println("good bye")
 }

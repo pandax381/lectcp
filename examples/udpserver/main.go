@@ -2,7 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/pandax381/lectcp/pkg/ethernet"
 	"github.com/pandax381/lectcp/pkg/icmp"
@@ -12,11 +17,17 @@ import (
 	"github.com/pandax381/lectcp/pkg/udp"
 )
 
+var sig chan os.Signal
+
 func init() {
 	icmp.Init()
 }
 
 func setup() error {
+	// signal handling
+	sig = make(chan os.Signal)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	// parse command line params
 	name := flag.String("name", "", "device name")
 	addr := flag.String("addr", "", "hardware address")
 	flag.Parse()
@@ -37,14 +48,15 @@ func setup() error {
 	}
 	iface, err := ip.CreateInterface(dev, "172.16.0.100", "255.255.255.0", "")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	dev.RegisterInterface(iface)
 	return nil
 }
 
 func main() {
-	if err := setup(); err != nil {
+	err := setup()
+	if err != nil {
 		panic(err)
 	}
 	conn, err := udp.Listen(
@@ -56,13 +68,27 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	buf := make([]byte, 65536)
-	for {
-		n, peer, err := conn.ReadFrom(buf)
-		if err != nil {
-			panic(err)
+	// launch receive loop
+	go func() {
+		buf := make([]byte, 65536)
+		for {
+			n, peer, err := conn.ReadFrom(buf)
+			if n > 0 {
+				log.Printf("main: receive %d bytes data from %s", n, peer)
+				conn.WriteTo(buf[:n], peer)
+			}
+			if err != nil {
+				if err != io.EOF {
+					fmt.Println(err)
+				}
+				return
+			}
 		}
-		log.Printf("main: receive %d bytes data from %s", n, peer)
-		conn.WriteTo(buf[:n], peer)
+	}()
+	select {
+	case s := <-sig:
+		fmt.Printf("sig: %s\n", s)
+		conn.Close()
 	}
+	fmt.Println("good bye")
 }

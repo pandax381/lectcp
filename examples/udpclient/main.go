@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/pandax381/lectcp/pkg/ethernet"
@@ -12,11 +17,17 @@ import (
 	"github.com/pandax381/lectcp/pkg/udp"
 )
 
+var sig chan os.Signal
+
 func init() {
 	icmp.Init()
 }
 
-func setupTap() error {
+func setup() error {
+	// signal handling
+	sig = make(chan os.Signal)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	// parse command line params
 	name := flag.String("name", "", "device name")
 	addr := flag.String("addr", "", "hardware address")
 	flag.Parse()
@@ -37,28 +48,46 @@ func setupTap() error {
 	}
 	iface, err := ip.CreateInterface(dev, "172.16.0.100", "255.255.255.0", "")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	dev.RegisterInterface(iface)
 	return nil
 }
 
 func main() {
-	if err := setupTap(); err != nil {
-		panic(err)
-	}
-	conn, err := udp.Dial(
-		nil,
-		&udp.Address{
-			Addr: ip.ParseAddress("172.16.0.1"),
-			Port: 10381,
-		},
-	)
+	err := setup()
 	if err != nil {
 		panic(err)
 	}
-	for {
-		conn.Write([]byte("hoge\n"))
-		time.Sleep(3 * time.Second)
+	peer := &udp.Address{
+		Addr: ip.ParseAddress("172.16.0.1"),
+		Port: 10381,
 	}
+	conn, err := udp.Dial(nil, peer)
+	if err != nil {
+		panic(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	// launch send loop
+	go func() {
+		t := time.NewTicker(1 * time.Second)
+		defer t.Stop()
+		data := []byte("hoge\n")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				fmt.Printf("%d bytes data send to %s\n", len(data), peer)
+				conn.Write(data)
+			}
+		}
+	}()
+	select {
+	case s := <-sig:
+		fmt.Printf("sig: %s\n", s)
+		cancel()
+	}
+	conn.Close()
+	fmt.Println("good bye")
 }
