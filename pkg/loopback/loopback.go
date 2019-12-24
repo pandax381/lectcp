@@ -3,7 +3,7 @@ package loopback
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
+	"io"
 	"unsafe"
 
 	"github.com/pandax381/lectcp/pkg/net"
@@ -60,11 +60,16 @@ func (d *Device) NeedARP() bool {
 }
 
 func (d *Device) Close() {
-
+	close(d.queue)
 }
 
 func (d *Device) Read(buf []byte) (int, error) {
-	return copy(buf, <-d.queue), nil
+	var err error
+	data, ok := <-d.queue
+	if !ok {
+		err = io.EOF
+	}
+	return copy(buf, data), err
 }
 
 func (d *Device) RxHandler(data []byte, callback net.LinkDeviceCallbackHandler) {
@@ -80,7 +85,6 @@ func (d *Device) Tx(Type net.EthernetType, data []byte, dst []byte) error {
 	buf := make([]byte, 2+len(data))
 	binary.BigEndian.PutUint16(buf[0:2], uint16(Type))
 	copy(buf[2:], data)
-	log.Printf("tx: [%s] loopback (%s) %d bytes\n", d.Name(), Type, len(data))
 	d.queue <- buf
 	return nil
 }
