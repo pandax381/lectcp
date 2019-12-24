@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/pandax381/lectcp/pkg/arp"
 	"github.com/pandax381/lectcp/pkg/icmp"
@@ -49,10 +52,32 @@ func main() {
 	for _, iface := range dev.Interfaces() {
 		fmt.Printf("  - %s\n", iface.Address())
 	}
+	// launch send loop
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		t := time.NewTicker(1 * time.Second)
+		defer t.Stop()
+		peer := ip.ParseAddress("127.0.0.1")
+		data := []byte("1234567890")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				fmt.Printf("send ICMP Echo to %s\n", peer)
+				icmp.EchoRequest(data, peer)
+			}
+		}
+	}()
 	select {
 	case s := <-sig:
 		fmt.Printf("sig: %s\n", s)
-		dev.Shutdown()
+		cancel()
 	}
+	wg.Wait()
+	dev.Shutdown()
 	fmt.Println("good bye")
 }

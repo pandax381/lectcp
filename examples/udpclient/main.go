@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -67,9 +68,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
 	// launch send loop
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		t := time.NewTicker(1 * time.Second)
 		defer t.Stop()
 		data := []byte("hoge\n")
@@ -88,6 +92,7 @@ func main() {
 		fmt.Printf("sig: %s\n", s)
 		cancel()
 	}
+	wg.Wait()
 	conn.Close()
 	fmt.Println("good bye")
 }
