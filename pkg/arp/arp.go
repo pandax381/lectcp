@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"log"
 
 	"github.com/pandax381/lectcp/pkg/net"
 )
@@ -28,7 +27,6 @@ func rxHandler(dev *net.Device, data []byte, src, dst net.HardwareAddress) error
 	if err != nil {
 		return err
 	}
-	log.Printf("%s => %s (%d bytes)\n", src, dst, len(data))
 	marge := repo.update(msg.sourceProtocolAddress, msg.sourceHardwareAddress)
 	for _, iface := range dev.Interfaces() {
 		if bytes.Compare(msg.targetProtocolAddress, iface.Address().Bytes()) == 0 {

@@ -2,7 +2,6 @@ package ip
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pandax381/lectcp/pkg/net"
 )
@@ -25,6 +24,5 @@ func RegisterProtocol(number net.ProtocolNumber, rxHandler ProtocolRxHandler) er
 		rxHandler: rxHandler,
 	}
 	protocols[number] = entry
-	log.Printf("protocol registered: %s\n", number)
 	return nil
 }

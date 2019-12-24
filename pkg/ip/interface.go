@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"log"
 
 	"github.com/pandax381/lectcp/pkg/arp"
 	"github.com/pandax381/lectcp/pkg/net"
@@ -59,7 +58,6 @@ func CreateInterface(dev *net.Device, unicast, netmask, gateway string) (*Interf
 		return nil, err
 	}
 	repo.add(iface, net, mask, gw)
-	repo.dump()
 	return iface, nil
 }
 
@@ -116,7 +114,6 @@ func (iface *Interface) xmit(datagram *datagram, nexthop net.ProtocolAddress) er
 }
 
 func (iface *Interface) Tx(protocol net.ProtocolNumber, data []byte, dst net.ProtocolAddress) error {
-	log.Printf("tx: [%s] %s => %s (%s) %d bytes\n", iface.Device().Name(), iface.Address(), dst, protocol, len(data))
 	var nexthop net.ProtocolAddress
 	src := iface.unicast
 	if dst.(Address) != BroadcastAddress {

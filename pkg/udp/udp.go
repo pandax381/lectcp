@@ -2,7 +2,6 @@ package udp
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pandax381/lectcp/pkg/ip"
 	"github.com/pandax381/lectcp/pkg/net"
@@ -18,8 +17,6 @@ func rxHandler(iface net.ProtocolInterface, data []byte, src, dst net.ProtocolAd
 	if err != nil {
 		return err
 	}
-	log.Printf("rx: %s:%d => %s:%d (%d bytes)\n", src, datagram.SourcePort, dst, datagram.DestinationPort, len(datagram.data))
-	datagram.dump()
 	addr := &Address{
 		Addr: iface.Address(),
 		Port: datagram.DestinationPort,

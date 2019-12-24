@@ -41,6 +41,5 @@ func RegisterProtocol(Type EthernetType, rxHandler ProtocolRxHandler) error {
 		}
 	}()
 	protocols.Store(Type, entry)
-	log.Printf("protocol registered: %s\n", entry.Type)
 	return nil
 }

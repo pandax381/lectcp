@@ -1,8 +1,6 @@
 package icmp
 
 import (
-	"log"
-
 	"github.com/pandax381/lectcp/pkg/ip"
 	"github.com/pandax381/lectcp/pkg/net"
 )
@@ -20,8 +18,6 @@ func rxHandler(iface net.ProtocolInterface, data []byte, src, dst net.ProtocolAd
 	if err != nil {
 		return err
 	}
-	log.Printf("rx: %s => %s (%s)\n", src, dst, msg.messageType())
-	msg.dump()
 	switch msg.messageType() {
 	case messageTypeEcho:
 		request := msg.(*messageEcho)
@@ -43,8 +39,6 @@ func tx(iface net.ProtocolInterface, msg message, dst net.ProtocolAddress) error
 	if err != nil {
 		return err
 	}
-	log.Printf("tx: %s => %s (%s)\n", iface.Address(), dst, msg.messageType())
-	msg.dump()
 	return iface.Tx(net.ProtocolNumberICMP, buf, dst)
 }
 

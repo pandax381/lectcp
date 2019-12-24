@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"unsafe"
 
 	"github.com/pandax381/lectcp/pkg/ip"
@@ -66,7 +65,5 @@ func (conn *Conn) WriteTo(data []byte, peer *Address) error {
 	b := buf.Bytes()
 	datagram.Checksum = net.Cksum16(b, len(b), pseudoHeaderSum(iface.Address(), peer.Addr, len(b)))
 	binary.BigEndian.PutUint16(b[6:8], datagram.Checksum)
-	log.Printf("[UDP] WriteTo: %s (%s:%d) => %s (%d bytes)\n", conn.cb.Address, iface.Address(), conn.cb.Address.Port, peer, len(data))
-	datagram.dump()
 	return iface.Tx(net.ProtocolNumberUDP, b, peer.Addr)
 }

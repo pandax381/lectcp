@@ -1,8 +1,6 @@
 package ip
 
 import (
-	"log"
-
 	"github.com/pandax381/lectcp/pkg/net"
 )
 
@@ -30,7 +28,6 @@ func rxHandler(dev *net.Device, data []byte, src, dst net.HardwareAddress) error
 				continue
 			}
 		}
-		log.Printf("rx: [%s] %s => %s (%s) %d bytes\n", dev.Name(), dgram.Src, dgram.Dst, dgram.Protocol, len(dgram.payload))
 		entry, ok := protocols[net.ProtocolNumber(dgram.Protocol)]
 		if ok {
 			if err := entry.rxHandler(iface, dgram.payload, dgram.Src, dgram.Dst); err != nil {

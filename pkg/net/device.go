@@ -2,6 +2,7 @@ package net
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"sync"
 )
@@ -64,20 +65,20 @@ func rxHandler(link LinkDevice, protocol EthernetType, payload []byte, src, dst 
 			Type  = k.(EthernetType)
 			entry = v.(*entry)
 		)
-		if Type != EthernetType(protocol) {
-			return true // continue
-		}
-		log.Printf("rx: [%s] %s => %s (%s) %d bytes\n", link.Name(), src, dst, protocol, len(payload))
-		dev, ok := devices.Load(link)
-		if ok {
+		if Type == EthernetType(protocol) {
+			dev, ok := devices.Load(link)
+			if !ok {
+				panic("device not found")
+			}
 			entry.rxQueue <- &packet{
 				dev:  dev.(*Device),
 				data: payload,
 				src:  src,
 				dst:  dst,
 			}
+			return false // break range loop
 		}
-		return false
+		return true
 	})
 }
 
@@ -103,7 +104,9 @@ func (d *Device) Interfaces() []ProtocolInterface {
 func (d *Device) Shutdown() {
 	d.LinkDevice.Close()
 	if err := <-d.errors; err != nil {
-		log.Println(err)
+		if err != io.EOF {
+			log.Println(err)
+		}
 	}
 	devices.Delete(d.LinkDevice)
 }

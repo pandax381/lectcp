@@ -114,7 +114,6 @@ func (d *Device) Tx(Type net.EthernetType, data []byte, dst []byte) error {
 	if pad := minFrameSize - frame.Len(); pad > 0 {
 		binary.Write(frame, binary.BigEndian, bytes.Repeat([]byte{byte(0)}, pad))
 	}
-	log.Printf("tx: [%s] %s => %s (%s) %d bytes\n", d.Name(), hdr.Src, hdr.Dst, hdr.Type, frame.Len())
 	_, err := d.raw.Write(frame.Bytes())
 	return err
 }
